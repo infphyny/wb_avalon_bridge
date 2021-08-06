@@ -1,6 +1,6 @@
 CAPI=2:
 
-name : wb_avalon_bridge:1.0
+name : ::wb_avalon_bridge:1.0
 
 description : Wishbone <-> Avalon bus bridges
 
