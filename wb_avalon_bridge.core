@@ -1,0 +1,19 @@
+CAPI=2:
+
+name : wb_avalon_bridge:1.0
+
+description : Wishbone <-> Avalon bus bridges
+
+
+filesets:
+  rtl:
+    files:
+      - rtl/avalon_to_wb_bridge.v 
+      - rtl/wb_to_avalon_bridge.v
+
+
+targets:
+  default:
+    filesets: [rtl]
+
+ 
