@@ -122,9 +122,10 @@ always @(posedge wb_clk_i) begin
 		burstbegin <= 0;
 		adr <= wb_adr_i;
 		if (cycstb & !m_av_waitrequest_i) begin
-			if (wb_we_i)
+			if (wb_we_i) begin
 				state <= WRITE;
 				burstbegin <= 1;
+			end
 			else if (wb_burst_req) begin
 				// Set counter for number of reads left,
 				// calculated by the burst count minus one
@@ -154,7 +155,7 @@ always @(posedge wb_clk_i) begin
 	end
 
 	READ: begin
-		burstbegin <= '0'
+		burstbegin <= 0
 		if (m_av_readdatavalid_i)
 			state <= IDLE;
 	end
@@ -165,7 +166,7 @@ always @(posedge wb_clk_i) begin
 		// decrease when a pending read is acknowledged.
 		// On cycles where both a read is pipelined and a pending read
 		// is acked, pending_reads do not change.
-		burstbegin <= '0'
+		burstbegin <= 0;
 		read_req <= 1;
 		if (m_av_readdatavalid_i)
 			pending_reads <= pending_reads - 1;
