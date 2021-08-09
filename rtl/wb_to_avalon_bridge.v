@@ -49,6 +49,7 @@ module wb_to_avalon_bridge #(
 	output 		  m_av_read_o,
 	input [DW-1:0] 	  m_av_readdata_i,
 	output [7:0] 	  m_av_burstcount_o,
+	output m_av_burstbegin_o,
 	output 		  m_av_write_o,
 	output [DW-1:0]   m_av_writedata_o,
 	input 		  m_av_waitrequest_i,
@@ -74,6 +75,7 @@ localparam WRAP4_BURST	= 2'b01;
 localparam WRAP8_BURST	= 2'b10;
 localparam WRAP16_BURST	= 2'b11;
 
+
 reg [2:0]	state;
 
 reg [3:0]	pending_reads;
@@ -84,6 +86,9 @@ wire [AW-1:0] 	curr_adr;
 wire [AW-1:0] 	next_adr;
 reg		read_req;
 wire [AW-1:0] 	wb_burst_req;
+
+reg burstbegin;
+assign m_av_burstbegin_o = burstbegin;
 
 //
 // Avalon bursts can be either linear or wrapped, but that is a synthesis,
@@ -110,13 +115,16 @@ assign wb_burst_req = cycstb & (wb_cti_i == INC_BURST);
 
 always @(posedge wb_clk_i) begin
 	read_req <= 0;
+	
 	case (state)
 	IDLE: begin
 		pending_reads <= 0;
+		burstbegin <= 0;
 		adr <= wb_adr_i;
 		if (cycstb & !m_av_waitrequest_i) begin
 			if (wb_we_i)
 				state <= WRITE;
+				burstbegin <= 1;
 			else if (wb_burst_req) begin
 				// Set counter for number of reads left,
 				// calculated by the burst count minus one
@@ -146,6 +154,7 @@ always @(posedge wb_clk_i) begin
 	end
 
 	READ: begin
+		burstbegin <= '0'
 		if (m_av_readdatavalid_i)
 			state <= IDLE;
 	end
@@ -156,6 +165,7 @@ always @(posedge wb_clk_i) begin
 		// decrease when a pending read is acknowledged.
 		// On cycles where both a read is pipelined and a pending read
 		// is acked, pending_reads do not change.
+		burstbegin <= '0'
 		read_req <= 1;
 		if (m_av_readdatavalid_i)
 			pending_reads <= pending_reads - 1;
@@ -183,6 +193,7 @@ always @(posedge wb_clk_i) begin
 	end
 
 	FLUSH_PIPE: begin
+		burstbegin <= 0;
 		if (m_av_readdatavalid_i) begin
 			if (pending_reads == 0)
 				state <= IDLE;
@@ -191,15 +202,18 @@ always @(posedge wb_clk_i) begin
 	end
 
 	WRITE: begin
+		burstbegin <= 0;
 		state <= IDLE;
 	end
 
 	default:
+	burstbegin <= 0;
 		state <= IDLE;
 	endcase
 
 	if (wb_rst_i) begin
 		read_req <= 0;
+		burstbegin <= 0;
 		state <= IDLE;
 	end
 end
