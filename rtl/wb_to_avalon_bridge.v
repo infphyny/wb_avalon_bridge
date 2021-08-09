@@ -155,7 +155,7 @@ always @(posedge wb_clk_i) begin
 	end
 
 	READ: begin
-		burstbegin <= 0
+		burstbegin <= 0;
 		if (m_av_readdatavalid_i)
 			state <= IDLE;
 	end
@@ -207,9 +207,10 @@ always @(posedge wb_clk_i) begin
 		state <= IDLE;
 	end
 
-	default:
-	burstbegin <= 0;
+	default: begin
+	    burstbegin <= 0;
 		state <= IDLE;
+	end
 	endcase
 
 	if (wb_rst_i) begin
